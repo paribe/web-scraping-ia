@@ -8,4 +8,4 @@ pandas
 tiktoken
 lxml
 python-decouple
-playwright
+playwright  

@@ -137,6 +137,40 @@ def formatar_tabela_brasileirao(resultado):
     
     return df
 
+def formatar_tabela_acoes(resultado):
+    """Formatar dados de ações"""
+    if not resultado:
+        return None
+    
+    # Filtrar apenas dados válidos
+    dados_validos = []
+    for item in resultado:
+        if isinstance(item, dict) and (item.get('simbolo_empresa') or item.get('nome_empresa')):
+            dados_validos.append(item)
+    
+    if not dados_validos:
+        return None
+    
+    df = pd.DataFrame(dados_validos)
+    
+    # Renomear colunas para exibição
+    column_mapping = {
+        'simbolo_empresa': 'Símbolo',
+        'nome_empresa': 'Empresa',
+        'setor_empresa': 'Setor',
+        'valor_mercado': 'Valor de Mercado',
+        'div_yield': 'Div. Yield',
+        'preco': 'Preço',
+        'variacao': 'Variação',
+        'volume': 'Volume',
+        'classificacao_analistas': 'Classificação'
+    }
+    
+    # Renomear apenas as colunas que existem
+    df = df.rename(columns={k: v for k, v in column_mapping.items() if k in df.columns})
+    
+    return df
+
 def formatar_artilharia(resultado):
     """Formatar dados de artilharia usando extração específica"""
     try:
@@ -256,14 +290,91 @@ if executar:
                     
             elif opcao == "Ações (Big Caps)":
                 with st.spinner("Fazendo scraping das ações..."):
-                    st.info("🚧 Funcionalidade em desenvolvimento para o deploy")
+                    try:
+                        # Importar o módulo de ações
+                        import exemplo2_acoes
+                        
+                        urls = ['https://br.tradingview.com/markets/stocks-brazil/market-movers-large-cap/']
+                        resultado = exemplo2_acoes.scrape_with_playwright(urls=urls, schema=exemplo2_acoes.schema)
+                        
+                        if resultado:
+                            st.success("✅ Scraping de ações concluído com sucesso!")
+                            
+                            st.subheader("📈 AÇÕES - BIG CAPS")
+                            
+                            # Formatar dados de ações
+                            df_acoes = formatar_tabela_acoes(resultado)
+                            
+                            if df_acoes is not None and not df_acoes.empty:
+                                st.dataframe(df_acoes, height=600)
+                                
+                                # Estatísticas básicas
+                                st.subheader("📊 Estatísticas")
+                                col1, col2, col3 = st.columns(3)
+                                
+                                with col1:
+                                    st.metric("Total de Empresas", len(df_acoes))
+                                
+                                with col2:
+                                    if 'Setor' in df_acoes.columns:
+                                        setores_unicos = df_acoes['Setor'].nunique()
+                                        st.metric("Setores Diferentes", setores_unicos)
+                                
+                                with col3:
+                                    st.metric("Dados Extraídos", "Em tempo real")
+                                
+                            else:
+                                st.warning("⚠️ Não foi possível formatar os dados das ações")
+                                st.json(resultado)
+                            
+                            # Seção expandível com dados brutos
+                            with st.expander("🔍 Ver dados brutos (JSON)"):
+                                st.json(resultado)
+                                
+                        else:
+                            st.warning("⚠️ Nenhum dado de ações foi extraído. Verifique a URL ou o schema.")
+                            
+                    except Exception as e:
+                        st.error(f"❌ Erro ao processar ações: {str(e)}")
                     
             elif opcao == "Agente inteligente":
-                with st.spinner("Executando agente inteligente..."):
-                    st.info("🚧 Funcionalidade em desenvolvimento para o deploy")
+                with st.spinner("Executando agente inteligente... (pode demorar alguns minutos)"):
+                    try:
+                        # Importar o módulo do agente
+                        import exemplo3_agente
+                        
+                        resultado = exemplo3_agente.executar_agente()
+                        
+                        if resultado:
+                            st.success("✅ Agente inteligente executado com sucesso!")
+                            
+                            st.subheader("🤖 RESULTADO DO AGENTE INTELIGENTE")
+                            
+                            # Exibir resultado do agente
+                            if isinstance(resultado, dict):
+                                if 'output' in resultado:
+                                    st.write("**Resposta do Agente:**")
+                                    st.info(resultado['output'])
+                                else:
+                                    st.json(resultado)
+                            else:
+                                st.write("**Resposta do Agente:**")
+                                st.info(str(resultado))
+                            
+                            # Seção expandível com dados brutos
+                            with st.expander("🔍 Ver resposta completa (JSON)"):
+                                st.json(resultado)
+                                
+                        else:
+                            st.warning("⚠️ O agente não retornou nenhum resultado.")
+                            
+                    except Exception as e:
+                        st.error(f"❌ Erro ao executar agente: {str(e)}")
+                        st.info("💡 **Nota:** O agente inteligente requer bibliotecas adicionais que podem não estar disponíveis no deploy.")
                     
         except ImportError as e:
             st.error(f"❌ Erro de importação: {str(e)}")
+            st.info("💡 Verifique se todos os módulos estão presentes no repositório.")
             
         except Exception as e:
             st.error(f"❌ Erro durante a execução: {str(e)}")
@@ -287,13 +398,13 @@ with st.sidebar:
         
     elif opcao == "Agente inteligente":
         st.write("**Agente Inteligente**")
-        st.write("- Dados extraídos da fonte:")
-        st.write("- Qual time está na primeira colocação do brasileirão na tabela do site:")
+        st.write("- Análise automatizada com IA")
+        st.write("- Pergunta: Qual time está na primeira colocação do brasileirão na tabela do site:")
         st.write("  [https://ge.globo.com/futebol/brasileirao-serie-a/](https://ge.globo.com/futebol/brasileirao-serie-a/)")
-        st.write("- E o último colocado")
-        st.write("- Powered by LangChain + OpenAI")
+        st.write("- E o último colocado?")
+        st.write("- Powered by LangChain + OpenAI + Playwright")
     
     # Informações do deploy
     st.markdown("---")
     st.caption("🚀 Deploy: Streamlit Cloud")
-    st.caption("🔧 GitHub: seu-repositorio")
+    st.caption("🔧 GitHub: paribe/web-scraping-ia")
