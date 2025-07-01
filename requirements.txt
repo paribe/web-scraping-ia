@@ -1,0 +1,9 @@
+langchain-openai
+langchain
+langchain-community
+beautifulsoup4
+streamlit
+requests
+pandas
+tiktoken
+lxml
