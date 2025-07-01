@@ -8,4 +8,5 @@ pandas
 tiktoken
 lxml
 python-decouple
-playwright  
+playwright==1.40.0
+playwright-stealth
